@@ -15,8 +15,14 @@ const (
 func main() {
 	err := generateChunks("originals/Main.pdf")
 	if err != nil {
-		fmt.Println("Error generating chunks: %v", err)
-		return
+		fmt.Printf("Error generating chunks: %v", err)
+	}
+
+	err = reconst("reconst/Main.pdf", 40)
+	if err != nil {
+		fmt.Printf("Error reconstructing file: %v", err)
+	} else {
+		fmt.Println("File reconstructed successfully!")
 	}
 }
 
@@ -57,6 +63,28 @@ func generateChunks(filepath string) error {
 			return fmt.Errorf("error writing chunk file %s: %w", chunkFileName, err)
 		}
 		index++
+	}
+
+	return nil
+}
+
+func reconst(outputPath string, totalChunks int) error {
+	outFile, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("error creating output file %s: %w", outputPath, err)
+	}
+	defer outFile.Close()
+
+	for i := 0; i < totalChunks; i++ {
+		chunkFileName := fmt.Sprintf("%s/chunk_%d", ChunkDir, i)
+		data, err := os.ReadFile(chunkFileName)
+		if err != nil {
+			return err
+		}
+		_, err = outFile.Write(data)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
