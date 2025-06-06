@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"os"
@@ -18,11 +19,26 @@ func main() {
 		fmt.Printf("Error generating chunks: %v", err)
 	}
 
+	var hash1, hash2 string
+	hash1, err = madman("originals/Main.pdf")
+	if err != nil {
+		fmt.Printf("Error calculating hash for chunk_0: %v", err)
+	}
+
 	err = reconst("reconst/Main.pdf", 40)
 	if err != nil {
 		fmt.Printf("Error reconstructing file: %v", err)
+	}
+
+	hash2, err = madman("reconst/Main.pdf")
+	if err != nil {
+		fmt.Printf("Error calculating hash: %v", err)
+	}
+
+	if hash1 == hash2 {
+		fmt.Println("Hashes match! File integrity verified.")
 	} else {
-		fmt.Println("File reconstructed successfully!")
+		fmt.Println("Hashes do not match! File integrity compromised.")
 	}
 }
 
@@ -88,4 +104,16 @@ func reconst(outputPath string, totalChunks int) error {
 	}
 
 	return nil
+}
+
+func madman(filePath string) (string, error) {
+	file, err := os.ReadFile(filePath)
+	if err != nil {
+		fmt.Printf("Error reading file %s: %v\n", filePath, err)
+		return "", err
+	}
+
+	hash := sha256.Sum256(file)
+	fmt.Printf("SHA-256 hash of %s: %x\n", filePath, hash)
+	return fmt.Sprintf("%x", hash), nil
 }
