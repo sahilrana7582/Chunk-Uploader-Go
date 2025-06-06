@@ -43,7 +43,7 @@ func generateChunks(filepath string) error {
 	for {
 		byteRead, err := file.Read(buff)
 		if err != nil && err != io.EOF {
-			return fmt.Errorf("error reading file: %w", err)
+			return fmt.Errorf("error reading file : %w", err)
 		}
 
 		if byteRead == 0 {
