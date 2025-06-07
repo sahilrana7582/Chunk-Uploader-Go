@@ -2,8 +2,10 @@ package main
 
 import (
 	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"io"
+	"net"
 	"os"
 )
 
@@ -116,4 +118,21 @@ func madman(filePath string) (string, error) {
 	hash := sha256.Sum256(file)
 	fmt.Printf("SHA-256 hash of %s: %x\n", filePath, hash)
 	return fmt.Sprintf("%x", hash), nil
+}
+
+func downloadFile(conn net.Conn) {
+	file, _ := os.Create("downloaded.txt")
+	defer file.Close()
+
+	for {
+		lengthBuf := make([]byte, 4)
+		_, err := io.ReadFull(conn, lengthBuf)
+		if err != nil {
+			break // EOF or broken connection
+		}
+		chunkSize := binary.BigEndian.Uint32(lengthBuf)
+		chunk := make([]byte, chunkSize)
+		io.ReadFull(conn, chunk)
+		file.Write(chunk)
+	}
 }

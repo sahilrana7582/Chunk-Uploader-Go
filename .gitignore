@@ -1,2 +1,8 @@
 chunk_uploader/originals/**
 chunk_uploader/reconst/**
+
+
+
+
+file_transfer_over_tcp/client/dowloads/**
+file_transfer_over_tcp/server/files/**
