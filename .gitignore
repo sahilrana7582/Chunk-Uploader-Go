@@ -15,3 +15,7 @@ chunk_manifestation/reconst/reconstructed/**
 
 CADFS/server/chunks/**
 CADFS/server/files/**
+
+CADFS/client/downloads/chunks/**
+CADFS/client/downloads/files/**
+CADFS/client/downloads/manifests/**
