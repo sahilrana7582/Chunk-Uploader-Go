@@ -9,36 +9,24 @@ import (
 
 func main() {
 	conn, err := net.Dial("tcp", "localhost:8080")
-
 	if err != nil {
-		fmt.Printf("Error connecting to server: %v", err)
-		return
+		panic(err)
 	}
-
-	fmt.Println("Connected to the server on port 8080")
-
 	defer conn.Close()
 
-	in := bufio.NewReader(os.Stdin)
+	go func() {
+		for {
+			msg, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+			fmt.Fprintf(conn, msg)
+		}
+	}()
 
 	for {
-		fmt.Print("Enter message to send: ")
-		message, err := in.ReadString('\n')
+		reply, err := bufio.NewReader(conn).ReadString('\n')
 		if err != nil {
-			fmt.Printf("Error reading input: %v\n", err)
+			fmt.Println("🔴 Disconnected from server")
 			return
 		}
-
-		if message == "exit\n" {
-			fmt.Println("Exiting the chat...")
-			return
-		}
-
-		_, err = conn.Write([]byte(message))
-		if err != nil {
-			fmt.Printf("Error sending message: %v\n", err)
-			return
-		}
-
+		fmt.Print(reply)
 	}
 }
