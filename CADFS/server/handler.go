@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -61,20 +62,40 @@ func handleConnection(conn net.Conn) {
 			fmt.Println("❌ Error sending manifest:", err)
 		}
 
-		conn.Close()
-
 	case "CHUNK":
 		if len(parts) != 3 {
 			conn.Write([]byte("ERROR: Chunk hash missing for CHUNK\n"))
 			return
 		}
+		chunkHash := parts[2]
 
-		for {
-			conn.Write([]byte("Chunk Data.....\n"))
-			time.Sleep(2 * time.Second)
+		chunkPath := fmt.Sprintf("chunks/%s.chunk", chunkHash)
+
+		file, err := os.Open(chunkPath)
+		if err != nil {
+			conn.Write([]byte(fmt.Sprintf("ERROR: Could not open chunk %s\n", chunkHash)))
+			return
 		}
-		// chunkHash := parts[2]
-		// sendChunk(conn, chunkHash)
+		defer file.Close()
+
+		time.Sleep(1 * time.Second)
+
+		buffer := make([]byte, 1024*1024*5)
+		for {
+			n, err := file.Read(buffer)
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				conn.Write([]byte(fmt.Sprintf("ERROR: Reading chunk %s failed\n", chunkHash)))
+				return
+			}
+
+			_, writeErr := conn.Write(buffer[:n])
+			if writeErr != nil {
+				return
+			}
+		}
 
 	default:
 		conn.Write([]byte("ERROR: Unknown command\n"))
