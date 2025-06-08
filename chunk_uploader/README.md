@@ -1,1 +1,0 @@
-# Chunk-Uploader-Go
