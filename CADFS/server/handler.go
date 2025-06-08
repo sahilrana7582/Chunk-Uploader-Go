@@ -2,9 +2,9 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"net"
+	"os"
 	"strings"
 	"time"
 )
@@ -38,44 +38,30 @@ func handleConnection(conn net.Conn) {
 	command := strings.ToUpper(parts[1])
 
 	switch command {
+
 	case "MANIFEST":
 		if len(parts) != 3 {
 			conn.Write([]byte("ERROR: Filename missing for MANIFEST\n"))
 			return
 		}
 
-		data := Manifest{
-			Filename: "Main.pdf",
-			Chunks: []string{
-				"Chunk1",
-				"Chunk1",
-				"Chunk1",
-				"Chunk1",
-				"Chunk1",
-			},
-		}
+		fileName := parts[2]
+		filePath := fmt.Sprintf("manifests/%s.json", fileName)
 
-		jsonData, err := json.Marshal(data)
+		data, err := os.ReadFile(filePath)
 		if err != nil {
-			fmt.Println("JSON marshal error:", err)
+			conn.Write([]byte("ERROR: Unable to read manifest\n"))
 			return
 		}
 
-		jsonData = append(jsonData, '\n')
+		data = append(data, '\n')
 
-		for {
-			_, err = conn.Write(jsonData)
-			if err != nil {
-				fmt.Println("Write error:", err)
-				return
-			}
-
-			fmt.Println("Sent message:", string(jsonData))
-			time.Sleep(4 * time.Second)
+		_, err = conn.Write(data)
+		if err != nil {
+			fmt.Println("❌ Error sending manifest:", err)
 		}
 
-		// fileName := parts[2]
-		// sendManifest(conn, fileName)
+		conn.Close()
 
 	case "CHUNK":
 		if len(parts) != 3 {
